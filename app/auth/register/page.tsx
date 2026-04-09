@@ -83,13 +83,16 @@ export default function RegisterPage() {
         }
 
         setSuccess(true)
-        setInfo('Cadastro concluído! Redirecionando para o login...')
+        setInfo('Cadastro concluído! Você já está autenticado e será redirecionado para o login...')
         setTimeout(() => {
           window.location.href = '/auth/login'
         }, 2000)
-      } else {
+      } else if (user) {
         setSuccess(true)
-        setInfo('Cadastro concluído! Verifique seu email e entre no login para continuar.')
+        setInfo('Cadastro concluído! Verifique seu email para confirmar sua conta antes de fazer login.')
+      } else {
+        setSuccess(false)
+        setInfo('Cadastro concluído! Verifique seu email para confirmar sua conta antes de fazer login.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

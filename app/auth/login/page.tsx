@@ -23,6 +23,9 @@ export default function LoginPage() {
       })
 
       if (signInError) {
+        if (signInError.message?.toLowerCase().includes('invalid login credentials')) {
+          throw new Error('Credenciais inválidas. Se você acabou de se cadastrar, confirme seu email antes de tentar entrar. Caso já tenha confirmado, verifique o email e a senha.')
+        }
         throw signInError
       }
 
