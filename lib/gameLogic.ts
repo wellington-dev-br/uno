@@ -34,7 +34,7 @@ export function getValidMoves(hand: Card[], topCard: Card, currentColor: string 
 export function calculateRoundScore(playerHands: Map<string, Card[]>): Map<string, number> {
   const scores = new Map<string, number>()
 
-  for (const [playerId, hand] of playerHands.entries()) {
+  for (const [playerId, hand] of Array.from(playerHands.entries())) {
     let score = 0
     for (const card of hand) {
       score += CARD_POINTS[card.value as keyof typeof CARD_POINTS] || 0
