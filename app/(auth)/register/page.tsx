@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { Database } from '@/lib/database.types'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
 
@@ -44,7 +45,7 @@ export default function RegisterPage() {
       if (user) {
         // Create user profile
         const { error: profileError } = await supabase
-          .from('users')
+          .from<Database['public']['Tables']['users']['Insert']>('users')
           .insert({
             id: user.id,
             email,

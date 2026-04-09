@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/auth-helpers-nextjs'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from './database.types'
 import { GameType } from './types'
 
