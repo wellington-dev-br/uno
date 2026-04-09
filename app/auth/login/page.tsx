@@ -123,6 +123,7 @@ export default function LoginPage() {
               placeholder="••••••••"
               className="input"
               required
+              disabled={loading}
             />
           </div>
 
@@ -131,6 +132,7 @@ export default function LoginPage() {
             variant="primary"
             loading={loading}
             className="w-full"
+            disabled={loading}
           >
             Sign In
           </Button>

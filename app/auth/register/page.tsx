@@ -21,6 +21,11 @@ export default function RegisterPage() {
     setError(null)
     setInfo(null)
 
+    if (!username.trim()) {
+      setError('Username is required')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
@@ -45,6 +50,9 @@ export default function RegisterPage() {
       })
 
       if (signUpError) {
+        if (signUpError.message?.toLowerCase().includes('email rate limit')) {
+          throw new Error('Muitas tentativas de envio de email. Aguarde alguns minutos e tente novamente.')
+        }
         throw signUpError
       }
 
@@ -176,6 +184,7 @@ export default function RegisterPage() {
               placeholder="••••••••"
               className="input"
               required
+              disabled={loading || success}
             />
           </div>
 
@@ -184,7 +193,7 @@ export default function RegisterPage() {
             variant="primary"
             loading={loading}
             className="w-full"
-            disabled={success}
+            disabled={loading || success}
           >
             Create Account
           </Button>
