@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-300;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply rounded-lg px-4 py-2 font-medium transition duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-bga-accent text-bga-dark hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-bga-accent text-bga-accent hover:bg-bga-accent hover:text-bga-dark;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .card {
+    @apply rounded-lg border border-gray-600 bg-bga-darker p-4 shadow-lg;
+  }
+
+  .card-game {
+    @apply aspect-video w-24 select-none rounded-lg border-2 border-gray-400 p-2 text-center font-bold transition duration-200 cursor-grab active:cursor-grabbing;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-gray-600 bg-bga-darker px-4 py-2 text-white placeholder-gray-500 focus:border-bga-accent focus:outline-none;
+  }
+}
+
+/* Custom animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* 3D Card Flip */
+.card-3d {
+  perspective: 1000px;
+}
+
+.card-3d-inner {
+  position: relative;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.card-3d-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-3d-front,
+.card-3d-back {
+  backface-visibility: hidden;
+}
+
+.card-3d-back {
+  transform: rotateY(180deg);
+}
