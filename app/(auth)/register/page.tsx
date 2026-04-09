@@ -45,12 +45,12 @@ export default function RegisterPage() {
       if (user) {
         // Create user profile
         const { error: profileError } = await supabase
-          .from<Database['public']['Tables']['users']['Insert']>('users')
+          .from('users')
           .insert({
             id: user.id,
             email,
             username,
-          })
+          } as any)
 
         if (profileError) {
           throw profileError
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           .from('user_stats')
           .insert({
             user_id: user.id,
-          })
+          } as any)
 
         setSuccess(true)
         setTimeout(() => {

@@ -1,12 +1,11 @@
 import { createBrowserClient } from '@supabase/auth-helpers-nextjs'
-import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from './database.types'
 import { GameType } from './types'
 
 export const supabase = createBrowserClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+) as any
 
 export async function getUser() {
   const { data: { user } } = await supabase.auth.getUser()
@@ -136,7 +135,7 @@ export async function createGame(gameType: GameType = 'casual', maxPlayers = 4) 
       game_type: gameType,
       max_players: maxPlayers,
       current_turn: user.id,
-    })
+    } as any)
     .select('*')
     .single()
 
@@ -148,7 +147,7 @@ export async function createGame(gameType: GameType = 'casual', maxPlayers = 4) 
     game_id: game.id,
     user_id: user.id,
     position: 1,
-  })
+  } as any)
 
   if (playerError) {
     throw playerError
@@ -194,7 +193,7 @@ export async function joinGame(gameId: string) {
     game_id: gameId,
     user_id: user.id,
     position: (typeof count === 'number' ? count + 1 : 1),
-  })
+  } as any)
 
   if (playerError) {
     throw playerError
