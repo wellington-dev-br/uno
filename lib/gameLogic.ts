@@ -1,4 +1,4 @@
-import { Card } from './types'
+import { Card, CardColor } from './types'
 import { CARD_POINTS, GAME_RULES } from './constants'
 
 /**
@@ -45,6 +45,45 @@ export function calculateRoundScore(playerHands: Map<string, Card[]>): Map<strin
   return scores
 }
 
+export function getExpectedScore(playerRating: number, opponentRating: number) {
+  return 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400))
+}
+
+export function calculateEloRating(
+  currentRating: number,
+  opponentRating: number,
+  score: number,
+  kFactor: number = 32
+) {
+  const expected = getExpectedScore(currentRating, opponentRating)
+  return Math.round(currentRating + kFactor * (score - expected))
+}
+
+export function calculateMultiplayerElo(
+  winnerRating: number,
+  opponentRatings: number[],
+  kFactor: number = 32,
+  adjustment: number = 0.8
+) {
+  if (opponentRatings.length === 0) {
+    return winnerRating
+  }
+
+  const averageOpponent = opponentRatings.reduce((sum, rating) => sum + rating, 0) / opponentRatings.length
+  const expected = getExpectedScore(winnerRating, averageOpponent)
+  return Math.round(winnerRating + kFactor * adjustment * (1 - expected))
+}
+
+export function calculateLoserElo(
+  loserRating: number,
+  winnerRating: number,
+  kFactor: number = 32,
+  adjustment: number = 0.8
+) {
+  const expected = getExpectedScore(loserRating, winnerRating)
+  return Math.round(loserRating + kFactor * adjustment * (0 - expected))
+}
+
 /**
  * Determines if UNO should be called
  */
@@ -55,8 +94,66 @@ export function shouldCallUno(handSize: number): boolean {
 /**
  * Handles Wild card color selection
  */
-export function getWildColorOptions(): string[] {
+export function getWildColorOptions(): CardColor[] {
   return ['red', 'yellow', 'blue', 'green']
+}
+
+export function isWildCard(card: Card): boolean {
+  return card.color === 'wild' || card.value === 'wild_draw4'
+}
+
+export function dealInitialHands(deck: Card[], playerCount: number, handSize = GAME_RULES.INITIAL_HAND_SIZE) {
+  const shuffledDeck = shuffleDeck(deck)
+  const hands: Card[][] = Array.from({ length: playerCount }, () => [])
+
+  for (let round = 0; round < handSize; round += 1) {
+    for (let index = 0; index < playerCount; index += 1) {
+      const card = shuffledDeck.shift()
+      if (card) {
+        hands[index].push(card)
+      }
+    }
+  }
+
+  return { hands, deck: shuffledDeck }
+}
+
+export function getStartingTopCard(deck: Card[]) {
+  const cards = [...deck]
+  let topCard: Card | undefined
+
+  while (cards.length > 0) {
+    const candidate = cards.shift()!
+    if (!isWildCard(candidate)) {
+      topCard = candidate
+      break
+    }
+    cards.push(candidate)
+  }
+
+  if (!topCard) {
+    topCard = cards.shift()!
+  }
+
+  const currentColor = topCard.color === 'wild' ? 'red' : topCard.color
+  return {
+    topCard,
+    currentColor,
+    deck: cards,
+  }
+}
+
+export function drawCards(deck: Card[], count: number) {
+  const drawn: Card[] = []
+  const workingDeck = [...deck]
+
+  for (let i = 0; i < count; i += 1) {
+    const nextCard = workingDeck.shift()
+    if (!nextCard) break
+    drawn.push(nextCard)
+  }
+
+  return { drawn, deck: workingDeck }
 }
 
 /**

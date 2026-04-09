@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:ci": "npm run lint && npm run build",
     "test:watch": "jest --watch",
     "setup-check": "node setup-check.js",
     "supabase:push": "supabase db push",

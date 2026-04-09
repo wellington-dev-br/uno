@@ -47,6 +47,18 @@ export interface GamePlayer {
   score: number
   is_alive: boolean
   joined_at: string
+  user?: User
+}
+
+export interface GameState extends Game {
+  deck?: Card[]
+  discard_pile?: Card[]
+  top_card?: Card | null
+  current_color?: CardColor | null
+  direction?: 'clockwise' | 'counterclockwise'
+  player_order?: string[]
+  active_player_index?: number
+  draw_penalty?: number
 }
 
 // Card Types

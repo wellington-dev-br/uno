@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, getFriends, sendFriendRequest, setUserPresence, subscribeToUserPresence } from '@/lib/supabase'
+import { supabase, getFriends, sendFriendRequest, setUserPresence, subscribeToUserPresence, quickMatch, getPendingGameInvites, respondGameInvite } from '@/lib/supabase'
 import { User } from '@/lib/types'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
@@ -10,8 +10,10 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null)
   const [friends, setFriends] = useState<any[]>([])
   const [friendStatuses, setFriendStatuses] = useState<Record<string, string>>({})
+  const [invites, setInvites] = useState<any[]>([])
   const [friendUsername, setFriendUsername] = useState('')
   const [friendStatus, setFriendStatus] = useState<string | null>(null)
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -53,6 +55,15 @@ export default function DashboardPage() {
       }
     }
 
+    const loadInvites = async () => {
+      try {
+        const inviteData = await getPendingGameInvites(user.id)
+        setInvites(inviteData)
+      } catch (error) {
+        console.error('Error loading invites:', error)
+      }
+    }
+
     const initPresence = async () => {
       try {
         await setUserPresence('online', null)
@@ -78,6 +89,7 @@ export default function DashboardPage() {
     })
 
     loadFriends()
+    loadInvites()
     initPresence()
 
     return () => {
@@ -105,6 +117,39 @@ export default function DashboardPage() {
       }
     } catch (error) {
       setFriendStatus(error instanceof Error ? error.message : 'Erro ao enviar solicitação.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleQuickMatch = async () => {
+    setLoading(true)
+    setInviteStatus(null)
+
+    try {
+      const game = await quickMatch()
+      setInviteStatus('Match encontrado! Redirecionando...')
+      window.location.href = `/game/${game.id}`
+    } catch (error) {
+      setInviteStatus(error instanceof Error ? error.message : 'Erro ao encontrar partida.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInviteResponse = async (inviteId: string, accept: boolean) => {
+    setLoading(true)
+    setInviteStatus(null)
+
+    try {
+      await respondGameInvite(inviteId, accept)
+      setInviteStatus(accept ? 'Convite aceito!' : 'Convite recusado.')
+      if (user) {
+        const inviteData = await getPendingGameInvites(user.id)
+        setInvites(inviteData)
+      }
+    } catch (error) {
+      setInviteStatus(error instanceof Error ? error.message : 'Erro ao responder o convite.')
     } finally {
       setLoading(false)
     }
@@ -199,6 +244,45 @@ export default function DashboardPage() {
                     Create Casual Game
                   </Button>
                 </Link>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-bga-darker border border-gray-600 p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">Matchmaking & convites</h3>
+                <span className="text-sm text-gray-400">Rápido e social</span>
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <Button onClick={handleQuickMatch} loading={loading} className="w-full">
+                  Encontrar partida casual
+                </Button>
+                <Button onClick={() => window.location.href = '/game'} variant="secondary" className="w-full">
+                  Iniciar sala manual
+                </Button>
+              </div>
+              <div className="mt-6">
+                <h4 className="text-sm uppercase tracking-[0.24em] text-gray-500">Convites pendentes</h4>
+                {invites.length === 0 ? (
+                  <p className="mt-3 text-gray-400">Nenhum convite pendente.</p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {invites.map((invite) => (
+                      <div key={invite.id} className="rounded-2xl bg-bga-dark p-4">
+                        <p className="font-semibold text-white">{invite.from_user?.username || invite.from_user_id}</p>
+                        <p className="text-sm text-gray-400">Partida: {invite.game?.id || '—'}</p>
+                        <div className="mt-3 flex gap-2">
+                          <Button onClick={() => handleInviteResponse(invite.id, true)} loading={loading} className="flex-1">
+                            Aceitar
+                          </Button>
+                          <Button onClick={() => handleInviteResponse(invite.id, false)} variant="secondary" className="flex-1">
+                            Recusar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {inviteStatus && <p className="mt-3 text-sm text-gray-300">{inviteStatus}</p>}
               </div>
             </div>
 

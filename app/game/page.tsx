@@ -1,17 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@/components/ui'
 import { User, Game } from '@/lib/types'
-import { createGame, getAvailableGames, getCurrentUserProfile, joinGame } from '@/lib/supabase'
+import { createGame, getAvailableGames, getCurrentUserProfile, joinGame, quickMatch, sendGameInvite } from '@/lib/supabase'
 
 export default function GamePage() {
   const [user, setUser] = useState<User | null>(null)
   const [games, setGames] = useState<Game[]>([])
   const [joinId, setJoinId] = useState('')
+  const [inviteUsername, setInviteUsername] = useState('')
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     loadUser()
@@ -31,14 +35,59 @@ export default function GamePage() {
   const handleCreateGame = async (gameType: 'casual' | 'ranked') => {
     setLoading(true)
     setMessage(null)
+    setInviteMessage(null)
 
     try {
-      await createGame(gameType, 4)
+      const game = await createGame(gameType, 4)
       setMessage(`Partida ${gameType} criada com sucesso!`)
       setJoinId('')
       await loadGames()
+      router.push(`/game/${game.id}`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erro ao criar a partida.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleQuickMatch = async () => {
+    setLoading(true)
+    setMessage(null)
+    setInviteMessage(null)
+
+    try {
+      const game = await quickMatch()
+      setMessage('Entrando em partida casual disponível...')
+      router.push(`/game/${game.id}`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Erro ao encontrar partida.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSendInvite = async () => {
+    if (!inviteUsername.trim()) {
+      setInviteMessage('Digite o nome de usuário do amigo.')
+      return
+    }
+
+    setLoading(true)
+    setInviteMessage(null)
+    setMessage(null)
+
+    try {
+      const selectedGameId = joinId || (games[0]?.id ?? '')
+      if (!selectedGameId) {
+        setInviteMessage('Crie ou selecione uma partida antes de convidar.')
+        return
+      }
+
+      await sendGameInvite(selectedGameId, inviteUsername.trim())
+      setInviteMessage(`Convite enviado para ${inviteUsername.trim()}!`)
+      setInviteUsername('')
+    } catch (error) {
+      setInviteMessage(error instanceof Error ? error.message : 'Erro ao enviar convite.')
     } finally {
       setLoading(false)
     }
@@ -58,6 +107,7 @@ export default function GamePage() {
       setMessage('Você entrou na partida com sucesso!')
       setJoinId('')
       await loadGames()
+      router.push(`/game/${joinId}`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erro ao entrar na partida.')
     } finally {
@@ -94,6 +144,12 @@ export default function GamePage() {
                 Criar Ranked
               </Button>
             </div>
+            <div className="mt-6 rounded-2xl border border-gray-700 bg-bga-dark p-4">
+              <p className="text-sm text-gray-400">Matchmaking rápido</p>
+              <Button onClick={handleQuickMatch} loading={loading} variant="secondary" className="mt-3 w-full">
+                Encontrar partida casual
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-2xl bg-bga-darker border border-gray-700 p-6">
@@ -108,6 +164,23 @@ export default function GamePage() {
               <Button onClick={handleJoinGame} disabled={loading} className="w-full">
                 Entrar na partida
               </Button>
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-gray-700 bg-bga-dark p-4">
+              <p className="text-sm text-gray-400">Convide um amigo para a próxima partida</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-[2fr_1fr]">
+                <Input
+                  value={inviteUsername}
+                  onChange={(event) => setInviteUsername(event.target.value)}
+                  placeholder="Nome de usuário"
+                />
+                <Button onClick={handleSendInvite} loading={loading} className="w-full">
+                  Convidar
+                </Button>
+              </div>
+              {inviteMessage && (
+                <p className="mt-3 text-sm text-gray-300">{inviteMessage}</p>
+              )}
             </div>
           </div>
         </div>

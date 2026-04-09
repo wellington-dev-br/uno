@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, getLeaderboard, getFriendLeaderboard, getCurrentUserProfile } from '@/lib/supabase'
 import { Button } from '@/components/ui'
 
 interface LeaderboardEntry {
@@ -14,18 +14,20 @@ interface LeaderboardEntry {
 
 export default function RankingPage() {
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([])
+  const [friends, setFriends] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadLeaderboard = async () => {
       try {
-        const { data } = await supabase
-          .from('users')
-          .select('id, username, elo_rank, casual_points, level')
-          .order('elo_rank', { ascending: false })
-          .limit(20)
+        const global = await getLeaderboard(20)
+        setLeaders(global)
 
-        setLeaders(data || [])
+        const currentUser = await getCurrentUserProfile()
+        if (currentUser) {
+          const friendBoard = await getFriendLeaderboard(currentUser.id, 10)
+          setFriends(friendBoard)
+        }
       } catch (error) {
         console.error('Erro ao carregar ranking:', error)
       } finally {
@@ -77,6 +79,37 @@ export default function RankingPage() {
                   <div className="text-center text-green-300">{player.level}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+        {friends.length > 0 && (
+          <div className="mt-10 rounded-3xl border border-gray-700 bg-bga-darker p-6">
+            <div className="flex items-center justify-between border-b border-gray-700 pb-4">
+              <h2 className="text-2xl font-semibold text-white">Ranking de Amigos</h2>
+              <p className="text-sm text-gray-400">Compare-se com seus amigos</p>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-3xl border border-gray-700 bg-bga-darker">
+              <div className="grid grid-cols-[3fr_1fr_1fr_1fr] border-b border-gray-700 bg-bga-dark px-6 py-4 text-sm uppercase tracking-[0.18em] text-gray-400">
+                <span>Jogador</span>
+                <span className="text-center">ELO</span>
+                <span className="text-center">Pontos</span>
+                <span className="text-center">Nível</span>
+              </div>
+              <div>
+                {friends.map((player, index) => (
+                  <div
+                    key={player.id}
+                    className="grid grid-cols-[3fr_1fr_1fr_1fr] gap-4 border-b border-gray-800 px-6 py-4 text-sm text-gray-100 hover:bg-bga-dark/70"
+                  >
+                    <div>
+                      <p className="font-semibold text-white">{index + 1}. {player.username}</p>
+                    </div>
+                    <div className="text-center text-bga-accent">{player.elo_rank}</div>
+                    <div className="text-center text-yellow-300">{player.casual_points}</div>
+                    <div className="text-center text-green-300">{player.level}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

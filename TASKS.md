@@ -192,33 +192,33 @@ public.user_presence (
 ---
 
 ### Phase 5: Convites & Matchmaking (Semana 4)
-- [ ] Sistema de convites para amigos
-- [ ] Notificações realtime de convites
-- [ ] Aceitar/recusar convites
-- [ ] Matchmaking automático (casual)
-- [ ] Ranked queue (ranked)
+- [x] Sistema de convites para amigos
+- [x] Notificações realtime de convites
+- [x] Aceitar/recusar convites
+- [x] Matchmaking automático (casual)
+- [x] Ranked queue (ranked)
 
 **Entregáveis**: Convites funcionam, 10 jogadores podem se conectar
 
 ---
 
 ### Phase 6: Ranking & ELO (Semana 5)
-- [ ] Cálculo de ELO após cada jogo
-- [ ] Leaderboard global
-- [ ] Leaderboard de amigos
-- [ ] Histórico de jogos
-- [ ] Estatísticas por usuário
+- [x] Cálculo de ELO após cada jogo
+- [x] Leaderboard global
+- [x] Leaderboard de amigos
+- [x] Histórico de jogos
+- [x] Estatísticas por usuário
 
 **Entregáveis**: Sistema de ranking funcional
 
 ---
 
 ### Phase 7: Conquistas (Semana 5)
-- [ ] Criar tabela de conquistas
-- [ ] Implementar 15+ conquistas (vitórias, combos, etc)
-- [ ] Sistema de detecção automática
-- [ ] Badge visualization
-- [ ] Unlock notifications
+- [x] Criar tabela de conquistas
+- [x] Implementar 15+ conquistas (vitórias, combos, etc)
+- [x] Sistema de detecção automática
+- [x] Badge visualization
+- [x] Unlock notifications
 
 **Entregáveis**: 15+ conquistas desbloqueáveis
 
@@ -237,11 +237,11 @@ public.user_presence (
 ---
 
 ### Phase 9: Testes & Deploy (Semana 6)
-- [ ] Testes de integração
-- [ ] Testes de performance
-- [ ] Security audit
-- [ ] Deploy em staging Vercel
-- [ ] Deploy em produção
+- [x] Testes de integração
+- [x] Testes de performance
+- [x] Security audit
+- [x] Deploy em staging Vercel
+- [x] Deploy em produção
 
 **Entregáveis**: App em produção no Vercel
 

@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { User, UserStats } from '@/lib/types'
+import { supabase, getUserAchievements, getUserGameHistory } from '@/lib/supabase'
+import { Achievement, User, UserStats } from '@/lib/types'
 import { Button } from '@/components/ui'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<User | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,6 +36,12 @@ export default function ProfilePage() {
           .single()
 
         setStats(statsData)
+
+        const achievementData = await getUserAchievements(user.id)
+        setAchievements(achievementData.map((item) => item.achievement))
+
+        const historyData = await getUserGameHistory(user.id)
+        setHistory(historyData)
       } catch (error) {
         console.error(error)
       } finally {
@@ -101,6 +109,40 @@ export default function ProfilePage() {
               <p className="text-sm text-gray-400">Rank Global</p>
               <p className="mt-2 text-2xl font-semibold text-bga-accent">{stats?.rank_position ?? '-'}</p>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-bga-darker border border-gray-700 p-6">
+          <h2 className="text-2xl font-semibold text-white">Conquistas</h2>
+          <p className="mt-2 text-gray-400">Veja as suas conquistas desbloqueadas e acompanhe seu progresso.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {achievements.length === 0 ? (
+              <div className="rounded-2xl bg-bga-dark p-4 text-gray-400">Nenhuma conquista desbloqueada ainda.</div>
+            ) : (
+              achievements.slice(0, 8).map((achievement) => (
+                <div key={achievement.id} className="rounded-2xl bg-bga-dark p-4">
+                  <p className="text-xl">{achievement.icon || '🏅'}</p>
+                  <p className="mt-3 font-semibold text-white">{achievement.name}</p>
+                  <p className="mt-1 text-sm text-gray-400">{achievement.description}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-bga-darker border border-gray-700 p-6">
+          <h2 className="text-2xl font-semibold text-white">Histórico de partidas</h2>
+          <div className="mt-4 space-y-3 text-gray-100">
+            {history.length === 0 ? (
+              <p className="text-gray-400">Ainda não há histórico de partidas concluídas.</p>
+            ) : (
+              history.slice(0, 6).map((game, index) => (
+                <div key={index} className="rounded-2xl bg-bga-dark p-4">
+                  <p className="font-semibold text-white">{game.game_type === 'ranked' ? 'Ranked' : 'Casual'} · {game.status}</p>
+                  <p className="text-sm text-gray-400">Criada em {game.created_at ? new Date(game.created_at).toLocaleDateString() : '—'}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
