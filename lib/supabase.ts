@@ -48,6 +48,57 @@ export async function getFriends(userId: string) {
   return data || []
 }
 
+export async function sendFriendRequest(username: string) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    throw authError || new Error('Usuário não autenticado')
+  }
+
+  const { data: targetUser, error: targetError } = await supabase
+    .from('users')
+    .select('id, username')
+    .eq('username', username)
+    .single()
+
+  if (targetError || !targetUser) {
+    throw targetError || new Error('Usuário não encontrado')
+  }
+
+  if (targetUser.id === user.id) {
+    throw new Error('Você não pode enviar solicitação para si mesmo')
+  }
+
+  const userA = user.id < targetUser.id ? user.id : targetUser.id
+  const userB = user.id < targetUser.id ? targetUser.id : user.id
+
+  const { data: existingFriendship, error: existingError } = await supabase
+    .from('friendships')
+    .select('*')
+    .eq('user_a_id', userA)
+    .eq('user_b_id', userB)
+    .single()
+
+  if (existingError && existingError.code !== 'PGRST116') {
+    console.error('Error checking friendship existence:', existingError)
+  }
+
+  if (existingFriendship) {
+    throw new Error('Já existe uma amizade ou solicitação entre vocês')
+  }
+
+  const { error: insertError } = await supabase.from('friendships').insert({
+    user_a_id: userA,
+    user_b_id: userB,
+    status: 'pending',
+  })
+
+  if (insertError) {
+    throw insertError
+  }
+
+  return true
+}
+
 export async function getGameInvites(userId: string) {
   const { data, error } = await supabase
     .from('game_invites')

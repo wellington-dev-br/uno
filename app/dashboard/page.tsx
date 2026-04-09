@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, getFriends, sendFriendRequest } from '@/lib/supabase'
 import { User } from '@/lib/types'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null)
+  const [friends, setFriends] = useState<any[]>([])
+  const [friendUsername, setFriendUsername] = useState('')
+  const [friendStatus, setFriendStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,6 +39,46 @@ export default function DashboardPage() {
 
     loadUser()
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+
+    const loadFriends = async () => {
+      try {
+        const friendData = await getFriends(user.id)
+        setFriends(friendData)
+      } catch (error) {
+        console.error('Error loading friends:', error)
+      }
+    }
+
+    loadFriends()
+  }, [user])
+
+  const handleSendFriendRequest = async () => {
+    if (!friendUsername.trim()) {
+      setFriendStatus('Digite o nome de usuário do amigo.')
+      return
+    }
+
+    setFriendStatus(null)
+    setLoading(true)
+
+    try {
+      await sendFriendRequest(friendUsername.trim())
+      setFriendStatus(`Solicitação enviada para ${friendUsername.trim()}!`)
+      setFriendUsername('')
+
+      if (user) {
+        const friendData = await getFriends(user.id)
+        setFriends(friendData)
+      }
+    } catch (error) {
+      setFriendStatus(error instanceof Error ? error.message : 'Erro ao enviar solicitação.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -123,6 +166,48 @@ export default function DashboardPage() {
                     Create Casual Game
                   </Button>
                 </Link>
+              </div>
+            </div>
+
+            {/* Friends */}
+            <div className="rounded-lg bg-bga-darker border border-gray-600 p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">Amigos</h3>
+                <span className="text-sm text-gray-400">{friends.length} conectados</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {friends.length === 0 ? (
+                  <p className="text-gray-400">Nenhum amigo conectado ainda. Envie um convite para começar a jogar com amigos.</p>
+                ) : (
+                  friends.map((friend) => {
+                    const friendUser = friend.user_a?.id === user?.id ? friend.user_b : friend.user_a
+                    return (
+                      <div key={friend.id} className="rounded-2xl bg-bga-dark p-4 text-gray-200">
+                        <p className="font-semibold">{friendUser?.username}</p>
+                        <p className="text-sm text-gray-400">Conectado</p>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              <div className="mt-6 rounded-2xl bg-bga-dark p-4">
+                <p className="text-sm text-gray-400">Enviar solicitação de amizade</p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    type="text"
+                    value={friendUsername}
+                    onChange={(event) => setFriendUsername(event.target.value)}
+                    placeholder="Nome de usuário"
+                    className="input w-full"
+                  />
+                  <Button onClick={handleSendFriendRequest} loading={loading} className="w-full sm:w-auto">
+                    Enviar
+                  </Button>
+                </div>
+                {friendStatus && (
+                  <p className="mt-3 text-sm text-gray-300">{friendStatus}</p>
+                )}
               </div>
             </div>
           </div>
