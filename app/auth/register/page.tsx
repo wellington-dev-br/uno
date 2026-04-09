@@ -39,61 +39,29 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      // Sign up
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/login`,
-          data: { username },
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email, password, username }),
       })
 
-      if (signUpError) {
-        if (signUpError.message?.toLowerCase().includes('email rate limit')) {
-          throw new Error('Muitas tentativas de envio de email. Aguarde alguns minutos e tente novamente.')
-        }
-        throw signUpError
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result?.error || 'Falha ao criar usuário')
       }
 
-      const { user, session } = data
-
-      if (session && user) {
-        // Create user profile and stats when the user is signed in immediately.
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: user.id,
-            email,
-            username,
-          } as any)
-
-        if (profileError) {
-          throw new Error(profileError.message || 'Erro ao criar perfil')
-        }
-
-        const { error: statsError } = await supabase
-          .from('user_stats')
-          .insert({
-            user_id: user.id,
-          } as any)
-
-        if (statsError) {
-          throw new Error(statsError.message || 'Erro ao criar estatísticas do usuário')
-        }
-
-        setSuccess(true)
-        setInfo('Cadastro concluído! Você já está autenticado e será redirecionado para o login...')
-        setTimeout(() => {
-          window.location.href = '/auth/login'
-        }, 2000)
-      } else if (user) {
-        setSuccess(true)
-        setInfo('Cadastro concluído! Verifique seu email para confirmar sua conta antes de fazer login.')
-      } else {
-        setSuccess(false)
-        setInfo('Cadastro concluído! Verifique seu email para confirmar sua conta antes de fazer login.')
-      }
+      setSuccess(true)
+      setInfo('Cadastro concluído! Agora faça login com email e senha.')
+      setTimeout(() => {
+        window.location.href = '/auth/login'
+      }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
