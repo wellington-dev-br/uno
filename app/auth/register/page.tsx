@@ -13,11 +13,13 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setInfo(null)
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
@@ -33,17 +35,23 @@ export default function RegisterPage() {
 
     try {
       // Sign up
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/login`,
+          data: { username },
+        },
       })
 
       if (signUpError) {
         throw signUpError
       }
 
-      if (user) {
-        // Create user profile
+      const { user, session } = data
+
+      if (session && user) {
+        // Create user profile and stats when the user is signed in immediately.
         const { error: profileError } = await supabase
           .from('users')
           .insert({
@@ -56,7 +64,6 @@ export default function RegisterPage() {
           throw new Error(profileError.message || 'Erro ao criar perfil')
         }
 
-        // Create user stats
         const { error: statsError } = await supabase
           .from('user_stats')
           .insert({
@@ -68,9 +75,13 @@ export default function RegisterPage() {
         }
 
         setSuccess(true)
+        setInfo('Cadastro concluído! Redirecionando para o login...')
         setTimeout(() => {
           window.location.href = '/auth/login'
         }, 2000)
+      } else {
+        setSuccess(true)
+        setInfo('Cadastro concluído! Verifique seu email e entre no login para continuar.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -106,9 +117,9 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {success && (
+          {info && (
             <div className="rounded-lg bg-green-500/10 border border-green-500 p-3 text-green-500 text-sm">
-              Account created! Redirecting to login...
+              {info}
             </div>
           )}
 

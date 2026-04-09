@@ -17,13 +17,49 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
         throw signInError
+      }
+
+      const user = data?.user
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (profileError) {
+          throw profileError
+        }
+
+        if (!profile) {
+          const username = (user.user_metadata as any)?.username || ''
+          if (!username) {
+            throw new Error('Não foi possível recuperar o nome de usuário de registro.')
+          }
+
+          const { error: profileInsertError } = await supabase.from('users').insert({
+            id: user.id,
+            email: user.email || email,
+            username,
+          } as any)
+          if (profileInsertError) {
+            throw profileInsertError
+          }
+
+          const { error: statsError } = await supabase.from('user_stats').insert({
+            user_id: user.id,
+          } as any)
+          if (statsError) {
+            throw statsError
+          }
+        }
       }
 
       // Redirect to dashboard
