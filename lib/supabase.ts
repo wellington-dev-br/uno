@@ -1,6 +1,7 @@
 import { createBrowserClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from './database.types'
 import { GameType } from './types'
+import { USER_PRESENCE } from './constants'
 
 export const supabase = createBrowserClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -120,6 +121,45 @@ export async function getGame(gameId: string) {
 
   if (error) console.error('Error fetching game:', error)
   return data
+}
+
+export async function setUserPresence(status: string = USER_PRESENCE.ONLINE, gameId: string | null = null) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    throw authError || new Error('Usuário não autenticado')
+  }
+
+  const { error } = await supabase
+    .from('user_presence')
+    .upsert({
+      user_id: user.id,
+      status,
+      game_id: gameId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
+  if (error) {
+    console.error('Error updating presence:', error)
+    throw error
+  }
+
+  return true
+}
+
+export async function subscribeToUserPresence(callback: (payload: any) => void) {
+  return supabase
+    .channel('realtime:user_presence')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'user_presence' },
+      (payload) => callback(payload)
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'user_presence' },
+      (payload) => callback(payload)
+    )
+    .subscribe()
 }
 
 export async function subscribeToPresence(userId: string, callback: (status: any) => void) {

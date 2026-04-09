@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, getFriends, sendFriendRequest } from '@/lib/supabase'
+import { supabase, getFriends, sendFriendRequest, setUserPresence, subscribeToUserPresence } from '@/lib/supabase'
 import { User } from '@/lib/types'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui'
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null)
   const [friends, setFriends] = useState<any[]>([])
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, string>>({})
   const [friendUsername, setFriendUsername] = useState('')
   const [friendStatus, setFriendStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -52,7 +53,36 @@ export default function DashboardPage() {
       }
     }
 
+    const initPresence = async () => {
+      try {
+        await setUserPresence('online', null)
+      } catch (error) {
+        console.error('Error setting presence:', error)
+      }
+    }
+
+    let subscription: any = null
+
+    subscribeToUserPresence((payload) => {
+      const record = payload.new || payload.record || payload
+      if (record?.user_id) {
+        setFriendStatuses((prev) => ({
+          ...prev,
+          [record.user_id]: record.status,
+        }))
+      }
+    }).then((sub) => {
+      subscription = sub
+    }).catch((error) => {
+      console.error('Error subscribing to presence:', error)
+    })
+
     loadFriends()
+    initPresence()
+
+    return () => {
+      subscription?.unsubscribe()
+    }
   }, [user])
 
   const handleSendFriendRequest = async () => {
@@ -101,9 +131,12 @@ export default function DashboardPage() {
       {/* Navbar */}
       <nav className="bg-bga-darker border-b border-gray-700 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <h1 className="text-2xl font-bold text-bga-accent">UNO</h1>
-            <div className="flex gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-bga-accent">UNO</h1>
+              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">Online</span>
+            </div>
+            <div className="flex flex-wrap gap-4">
               <Link href="/dashboard" className="text-gray-300 hover:text-bga-accent">
                 Dashboard
               </Link>
@@ -181,10 +214,16 @@ export default function DashboardPage() {
                 ) : (
                   friends.map((friend) => {
                     const friendUser = friend.user_a?.id === user?.id ? friend.user_b : friend.user_a
+                    const status = friendStatuses[friendUser?.id] || 'offline'
                     return (
                       <div key={friend.id} className="rounded-2xl bg-bga-dark p-4 text-gray-200">
-                        <p className="font-semibold">{friendUser?.username}</p>
-                        <p className="text-sm text-gray-400">Conectado</p>
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="font-semibold">{friendUser?.username}</p>
+                          <span className={`text-sm ${status === 'online' ? 'text-emerald-400' : status === 'playing' ? 'text-cyan-400' : 'text-gray-400'}`}>
+                            {status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400">Amigo</p>
                       </div>
                     )
                   })

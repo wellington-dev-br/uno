@@ -155,12 +155,12 @@ public.user_presence (
 ---
 
 ### Phase 2: Interface & Amigos (Semana 2)
-- [ ] Dashboard principal
-- [ ] Lista de amigos (online/offline realtime)
-- [ ] Sistema de adição de amigos
-- [ ] Perfil do usuário
-- [ ] Navbar com status
-- [ ] Setup Supabase Realtime
+- [x] Dashboard principal
+- [x] Lista de amigos (online/offline realtime)
+- [x] Sistema de adição de amigos
+- [x] Perfil do usuário
+- [x] Navbar com status
+- [x] Setup Supabase Realtime
 
 **Entregáveis**: Sistema de amigos funcionando em tempo real
 
