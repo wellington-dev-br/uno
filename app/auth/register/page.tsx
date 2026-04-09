@@ -62,11 +62,6 @@ export default function RegisterPage() {
     } finally {
       setLoading(false)
     }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
   }
 
   useEffect(() => {
