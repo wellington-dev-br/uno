@@ -181,6 +181,11 @@ CREATE POLICY "Users can view all profiles"
   ON public.users FOR SELECT
   USING (true);
 
+-- Users can insert their own profile
+CREATE POLICY "Users can insert own profile"
+  ON public.users FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- Users can update their own profile
 CREATE POLICY "Users can update own profile"
   ON public.users FOR UPDATE
@@ -191,6 +196,11 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Everyone can view user stats"
   ON public.user_stats FOR SELECT
   USING (true);
+
+-- Users can insert their own stats
+CREATE POLICY "Users can insert own stats"
+  ON public.user_stats FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
 -- Games - users can view games they're in or public games
 CREATE POLICY "Users can view games they're in"

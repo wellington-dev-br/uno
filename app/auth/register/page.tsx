@@ -53,15 +53,19 @@ export default function RegisterPage() {
           } as any)
 
         if (profileError) {
-          throw profileError
+          throw new Error(profileError.message || 'Erro ao criar perfil')
         }
 
         // Create user stats
-        await supabase
+        const { error: statsError } = await supabase
           .from('user_stats')
           .insert({
             user_id: user.id,
           } as any)
+
+        if (statsError) {
+          throw new Error(statsError.message || 'Erro ao criar estatísticas do usuário')
+        }
 
         setSuccess(true)
         setTimeout(() => {
