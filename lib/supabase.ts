@@ -1,5 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from './database.types'
+import { GameType } from './types'
 
 export const supabase = createClientComponentClient<Database>()
 
@@ -101,4 +102,99 @@ export async function subscribeToNotifications(userId: string, callback: (data: 
       callback({ type: 'invite', data: payload })
     })
     .subscribe()
+}
+
+export async function getAvailableGames() {
+  const { data, error } = await supabase
+    .from('games')
+    .select('id, host_id, status, game_type, max_players, current_turn, round_number, created_at')
+    .eq('status', 'waiting')
+    .order('created_at', { ascending: true })
+    .limit(10)
+
+  return {
+    games: data || [],
+    error,
+  }
+}
+
+export async function createGame(gameType: GameType = 'casual', maxPlayers = 4) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    throw authError || new Error('Usuário não autenticado')
+  }
+
+  const { data: game, error } = await supabase
+    .from('games')
+    .insert({
+      host_id: user.id,
+      status: 'waiting',
+      game_type: gameType,
+      max_players: maxPlayers,
+      current_turn: user.id,
+    })
+    .select('*')
+    .single()
+
+  if (error || !game) {
+    throw error || new Error('Não foi possível criar a partida')
+  }
+
+  const { error: playerError } = await supabase.from('game_players').insert({
+    game_id: game.id,
+    user_id: user.id,
+    position: 1,
+  })
+
+  if (playerError) {
+    throw playerError
+  }
+
+  return game
+}
+
+export async function joinGame(gameId: string) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    throw authError || new Error('Usuário não autenticado')
+  }
+
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('id, status, max_players')
+    .eq('id', gameId)
+    .single()
+
+  if (gameError || !game) {
+    throw gameError || new Error('Partida não encontrada')
+  }
+
+  if (game.status !== 'waiting') {
+    throw new Error('A partida não está disponível para entrada')
+  }
+
+  const { count, error: countError } = await supabase
+    .from('game_players')
+    .select('id', { count: 'exact', head: true })
+    .eq('game_id', gameId)
+
+  if (countError) {
+    throw countError
+  }
+
+  if (typeof count === 'number' && count >= game.max_players) {
+    throw new Error('A partida já atingiu o número máximo de jogadores')
+  }
+
+  const { error: playerError } = await supabase.from('game_players').insert({
+    game_id: gameId,
+    user_id: user.id,
+    position: (typeof count === 'number' ? count + 1 : 1),
+  })
+
+  if (playerError) {
+    throw playerError
+  }
+
+  return true
 }

@@ -16,17 +16,14 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Protect dashboard routes
-  if (req.nextUrl.pathname.startsWith('/dashboard') && !session) {
-    return NextResponse.redirect(new URL('/login', req.url))
+  const protectedRoutes = ['/dashboard', '/game', '/profile', '/ranking', '/settings']
+  const authRoutes = ['/auth/login', '/auth/register']
+
+  if (protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route)) && !session) {
+    return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
-  // Redirect authenticated users away from auth pages
-  if (
-    (req.nextUrl.pathname.startsWith('/login') ||
-     req.nextUrl.pathname.startsWith('/register')) &&
-    session
-  ) {
+  if (authRoutes.some((route) => req.nextUrl.pathname.startsWith(route)) && session) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
