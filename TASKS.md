@@ -143,12 +143,12 @@ public.user_presence (
 ## 📅 Fases de Desenvolvimento
 
 ### Phase 1: Setup & Auth (Semana 1)
-- [ ] Inicializar projeto Next.js com Tailwind
-- [ ] Configurar Supabase project
-- [ ] Setup do banco de dados - criar todas tabelas
-- [ ] Autenticação Supabase (email/senha)
-- [ ] Página de login/registro
-- [ ] Middleware de proteção de rotas
+- [x] Inicializar projeto Next.js com Tailwind
+- [x] Configurar Supabase project
+- [x] Setup do banco de dados - criar todas tabelas
+- [x] Autenticação Supabase (email/senha)
+- [x] Página de login/registro
+- [x] Middleware de proteção de rotas
 
 **Entregáveis**: Usuários podem se registrar e fazer login
 
