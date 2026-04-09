@@ -1,9 +1,13 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 export async function getServerSession() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies }
+  )
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -16,7 +20,11 @@ export async function getServerSession() {
 }
 
 export async function getServerUser() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies }
+  )
   const {
     data: { user },
   } = await supabase.auth.getUser()
